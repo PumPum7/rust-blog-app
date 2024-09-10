@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Blogpost App</title>
+		<style>
+			body {
+				font-family: Arial, sans-serif;
+				max-width: 800px;
+				margin: 0 auto;
+				padding: 20px;
+			}
+			form {
+				margin-bottom: 20px;
+			}
+			input,
+			textarea {
+				display: block;
+				margin-bottom: 10px;
+				width: 100%;
+			}
+			.blogpost {
+				border: 1px solid #ddd;
+				padding: 10px;
+				margin-bottom: 10px;
+			}
+			img {
+				max-width: 100%;
+			}
+		</style>
+	</head>
+	<body>
+		<h1>Blogpost App</h1>
+
+		<form action="/submit" method="post" enctype="multipart/form-data">
+			<textarea
+				name="text"
+				placeholder="Blogpost text"
+				required
+			></textarea>
+			<input
+				type="text"
+				name="username"
+				placeholder="User name"
+				required
+			/>
+			<input type="file" name="image" accept=".png" />
+			<input
+				type="url"
+				name="avatar_url"
+				placeholder="User avatar URL (.png)"
+			/>
+			<input type="submit" value="Post" />
+		</form>
+
+		<div id="feed"></div>
+
+		<script>
+			async function fetchBlogposts() {
+				const response = await fetch("/posts");
+				const html = await response.text();
+				document.getElementById("feed").innerHTML = html;
+			}
+
+			fetchBlogposts();
+			setInterval(fetchBlogposts, 5000);
+		</script>
+	</body>
+</html>
