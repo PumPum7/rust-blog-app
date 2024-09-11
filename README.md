@@ -24,11 +24,7 @@ This is a blogpost application built with Rust using the Axum web framework.
 
 ### Steps
 
-1. Clone the repository:
-   ```
-   git clone <repository-url>
-   cd <repository-directory>
-   ```
+1. Clone the repository
 
 2. Build the Docker image:
    ```
