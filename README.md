@@ -4,7 +4,7 @@ This is a blogpost application built with Rust using the Axum web framework.
 
 ## Technologies Used
 
-- Rust 1.70
+- Rust 1.81
 - Axum web framework
 - SQLite for database
 - Docker for containerization
