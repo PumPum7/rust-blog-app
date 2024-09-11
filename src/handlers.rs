@@ -43,19 +43,25 @@ pub async fn submit_post(
                 blogpost.username = field.text().await.map_err(|e| AppError::BadRequest(e.to_string()))?;
             }
             "image" => {
-                let filename = format!("images/{}.png", Uuid::new_v4());
-                let data = field.bytes().await.map_err(|e| AppError::BadRequest(e.to_string()))?;
-                tokio::fs::write(&filename, data).await?;
-                blogpost.image = Some(filename);
+                if let Ok(data) = field.bytes().await {
+                    if !data.is_empty() {
+                        let filename = format!("images/{}.png", Uuid::new_v4());
+                        tokio::fs::write(&filename, data).await?;
+                        blogpost.image = Some(filename);
+                    }
+                }
             }
             "avatar_url" => {
-                let url = field.text().await.map_err(|e| AppError::BadRequest(e.to_string()))?;
-                let response = reqwest::get(&url).await.map_err(|e| AppError::RequestError(e))?;
-                let filename = format!("images/{}.png", Uuid::new_v4());
-                let mut file = File::create(&filename).await?;
-                let content = response.bytes().await.map_err(|e| AppError::RequestError(e))?;
-                file.write_all(&content).await?;
-                blogpost.avatar = Some(filename);
+                if let Ok(url) = field.text().await {
+                    if !url.is_empty() {
+                        let response = reqwest::get(&url).await.map_err(|e| AppError::RequestError(e))?;
+                        let filename = format!("images/{}.png", Uuid::new_v4());
+                        let mut file = File::create(&filename).await?;
+                        let content = response.bytes().await.map_err(|e| AppError::RequestError(e))?;
+                        file.write_all(&content).await?;
+                        blogpost.avatar = Some(filename);
+                    }
+                }
             }
             _ => {}
         }
@@ -117,7 +123,7 @@ pub async fn get_posts(State(state): State<Arc<AppState>>) -> Result<Html<String
                 img
             )),
             post.text,
-            post.date
+            post.date.split('T').next().unwrap_or(&post.date)
         ));
     }
     html.push_str("</div>");
