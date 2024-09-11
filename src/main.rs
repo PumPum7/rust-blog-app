@@ -10,7 +10,7 @@ use tower_http::services::ServeDir;
 
 #[tokio::main]
 async fn main() {
-    let app_state = Arc::new(AppState::new().expect("Failed to initialize app state"));
+    let app_state = Arc::new(AppState::new().await.expect("Failed to initialize app state"));
 
     let app = Router::new()
         .route("/", get(handlers::redirect_home))
@@ -20,8 +20,6 @@ async fn main() {
         .nest_service("/images", ServeDir::new("images"))
         .with_state(app_state);
 
-    axum::Server::bind(&"0.0.0.0:3000".parse().unwrap())
-        .serve(app.into_make_service())
-        .await
-        .unwrap();
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    axum::serve(listener, app).await.unwrap();
 }

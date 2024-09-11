@@ -6,7 +6,7 @@ use axum::{
     response::{Html, Redirect},
 };
 use chrono::Utc;
-use rusqlite::params;
+use sqlx::{Row};
 use std::sync::Arc;
 use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
@@ -82,46 +82,37 @@ pub async fn submit_post(
         }
     }
 
-    let db = state
-        .db
-        .lock()
-        .map_err(|_| AppError::InternalServerError("Failed to lock database".into()))?;
-    db.execute(
-        "INSERT INTO blogposts (id, text, date, image, username, avatar) VALUES (?, ?, ?, ?, ?, ?)",
-        params![
-            blogpost.id,
-            blogpost.text,
-            blogpost.date,
-            blogpost.image,
-            blogpost.username,
-            blogpost.avatar
-        ],
-    )?;
+    sqlx::query(
+        "INSERT INTO blogposts (id, text, date, image, username, avatar) VALUES (?, ?, ?, ?, ?, ?)"
+    )
+        .bind(&blogpost.id)
+        .bind(&blogpost.text)
+        .bind(&blogpost.date)
+        .bind(&blogpost.image)
+        .bind(&blogpost.username)
+        .bind(&blogpost.avatar)
+        .execute(&state.db)
+        .await?;
 
     Ok(Redirect::to("/home"))
 }
 
 pub async fn get_posts(State(state): State<Arc<AppState>>) -> Result<Html<String>, AppError> {
-    let db = state
-        .db
-        .lock()
-        .map_err(|_| AppError::InternalServerError("Failed to lock database".into()))?;
-    let mut stmt = db.prepare(
-        "SELECT id, text, date, image, username, avatar FROM blogposts ORDER BY date DESC",
-    )?;
-
-    let posts = stmt
-        .query_map([], |row| {
-            Ok(Blogpost {
-                id: row.get(0)?,
-                text: row.get(1)?,
-                date: row.get(2)?,
-                image: row.get(3)?,
-                username: row.get(4)?,
-                avatar: row.get(5)?,
-            })
-        })?
-        .collect::<Result<Vec<_>, _>>()?;
+    let posts = sqlx::query(
+        "SELECT id, text, date, image, username, avatar FROM blogposts ORDER BY date DESC"
+    )
+        .fetch_all(&state.db)
+        .await?
+        .into_iter()
+        .map(|row| Blogpost {
+            id: row.get("id"),
+            text: row.get("text"),
+            date: row.get("date"),
+            image: row.get("image"),
+            username: row.get("username"),
+            avatar: row.get("avatar"),
+        })
+        .collect::<Vec<_>>();
 
     let mut html = String::from("<div id='feed'>");
     for post in posts {
