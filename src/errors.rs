@@ -26,7 +26,9 @@ impl IntoResponse for AppError {
             AppError::IoError(ref e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
             AppError::RequestError(ref e) => (StatusCode::BAD_REQUEST, e.to_string()),
             AppError::BadRequest(ref e) => (StatusCode::BAD_REQUEST, e.to_string()),
-            AppError::InternalServerError(ref e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
+            AppError::InternalServerError(ref e) => {
+                (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
+            }
         };
 
         (status, error_message).into_response()

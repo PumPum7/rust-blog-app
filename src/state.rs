@@ -21,8 +21,6 @@ impl AppState {
             [],
         )?;
 
-        Ok(Self {
-            db: Mutex::new(db),
-        })
+        Ok(Self { db: Mutex::new(db) })
     }
 }

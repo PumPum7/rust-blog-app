@@ -33,14 +33,24 @@ pub async fn submit_post(
         avatar: None,
     };
 
-    while let Some(field) = multipart.next_field().await.map_err(|e| AppError::BadRequest(e.to_string()))? {
+    while let Some(field) = multipart
+        .next_field()
+        .await
+        .map_err(|e| AppError::BadRequest(e.to_string()))?
+    {
         let name = field.name().unwrap().to_string();
         match name.as_str() {
             "text" => {
-                blogpost.text = field.text().await.map_err(|e| AppError::BadRequest(e.to_string()))?;
+                blogpost.text = field
+                    .text()
+                    .await
+                    .map_err(|e| AppError::BadRequest(e.to_string()))?;
             }
             "username" => {
-                blogpost.username = field.text().await.map_err(|e| AppError::BadRequest(e.to_string()))?;
+                blogpost.username = field
+                    .text()
+                    .await
+                    .map_err(|e| AppError::BadRequest(e.to_string()))?;
             }
             "image" => {
                 if let Ok(data) = field.bytes().await {
@@ -54,10 +64,15 @@ pub async fn submit_post(
             "avatar_url" => {
                 if let Ok(url) = field.text().await {
                     if !url.is_empty() {
-                        let response = reqwest::get(&url).await.map_err(|e| AppError::RequestError(e))?;
+                        let response = reqwest::get(&url)
+                            .await
+                            .map_err(|e| AppError::RequestError(e))?;
                         let filename = format!("images/{}.png", Uuid::new_v4());
                         let mut file = File::create(&filename).await?;
-                        let content = response.bytes().await.map_err(|e| AppError::RequestError(e))?;
+                        let content = response
+                            .bytes()
+                            .await
+                            .map_err(|e| AppError::RequestError(e))?;
                         file.write_all(&content).await?;
                         blogpost.avatar = Some(filename);
                     }
@@ -67,7 +82,10 @@ pub async fn submit_post(
         }
     }
 
-    let db = state.db.lock().map_err(|_| AppError::InternalServerError("Failed to lock database".into()))?;
+    let db = state
+        .db
+        .lock()
+        .map_err(|_| AppError::InternalServerError("Failed to lock database".into()))?;
     db.execute(
         "INSERT INTO blogposts (id, text, date, image, username, avatar) VALUES (?, ?, ?, ?, ?, ?)",
         params![
@@ -84,20 +102,26 @@ pub async fn submit_post(
 }
 
 pub async fn get_posts(State(state): State<Arc<AppState>>) -> Result<Html<String>, AppError> {
-    let db = state.db.lock().map_err(|_| AppError::InternalServerError("Failed to lock database".into()))?;
-    let mut stmt = db.prepare("SELECT id, text, date, image, username, avatar FROM blogposts ORDER BY date DESC")?;
+    let db = state
+        .db
+        .lock()
+        .map_err(|_| AppError::InternalServerError("Failed to lock database".into()))?;
+    let mut stmt = db.prepare(
+        "SELECT id, text, date, image, username, avatar FROM blogposts ORDER BY date DESC",
+    )?;
 
-    let posts = stmt.query_map([], |row| {
-        Ok(Blogpost {
-            id: row.get(0)?,
-            text: row.get(1)?,
-            date: row.get(2)?,
-            image: row.get(3)?,
-            username: row.get(4)?,
-            avatar: row.get(5)?,
-        })
-    })?
-    .collect::<Result<Vec<_>, _>>()?;
+    let posts = stmt
+        .query_map([], |row| {
+            Ok(Blogpost {
+                id: row.get(0)?,
+                text: row.get(1)?,
+                date: row.get(2)?,
+                image: row.get(3)?,
+                username: row.get(4)?,
+                avatar: row.get(5)?,
+            })
+        })?
+        .collect::<Result<Vec<_>, _>>()?;
 
     let mut html = String::from("<div id='feed'>");
     for post in posts {
