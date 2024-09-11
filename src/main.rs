@@ -179,26 +179,28 @@ async fn get_posts(
     let mut html = String::from("<div id='feed'>");
     for post in posts {
         html.push_str(&format!(
-            "
+            r#"
             <div class='blogpost'>
-                <h3>{}</h3>
+                <div class='blogpost-header'>
+                    {}
+                    <h3>{}</h3>
+                </div>
+                {}
                 <p>{}</p>
                 <p>Date: {}</p>
-                {}
-                {}
             </div>
-        ",
+            "#,
+            post.avatar.map_or(String::new(), |avatar| format!(
+                r#"<img src='{}' alt='User avatar'>"#,
+                avatar
+            )),
             post.username,
-            post.text,
-            post.date,
             post.image.map_or(String::new(), |img| format!(
-                "<img src='{}' alt='Post image'>",
+                r#"<img src='{}' alt='Post image' class='blogpost-image'>"#,
                 img
             )),
-            post.avatar.map_or(String::new(), |avatar| format!(
-                "<img src='{}' alt='User avatar'>",
-                avatar
-            ))
+            post.text,
+            post.date
         ));
     }
     html.push_str("</div>");
