@@ -41,6 +41,10 @@ This is a blogpost application built with Rust using the Axum web framework.
 ## Project Structure
 
 - `src/main.rs`: Main application code
+- `src/handlers.rs`: Request handlers
+- `src/state.rs`: Application state and database initialization
+- `src/models.rs`: Data models
+- `src/errors.rs`: Error handling
 - `src/index.html`: HTML template for the home page
 - `Dockerfile`: Docker configuration for building and running the app
 - `images/`: Directory for storing uploaded images (created at runtime)
